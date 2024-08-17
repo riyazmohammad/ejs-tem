@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload</title>
+</head>
+<body>
+    <h1>Upload Talabat Receipt Image</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" capture="environment">
+        <button type="submit">Upload and Process</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Uploading and processing...';
+
+            try {
+                // First, upload the image
+                const uploadResponse = await fetch('https://process.aijazai.online/upload_image', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (!uploadResponse.ok) {
+                    throw new Error(`Upload failed: ${uploadResponse.statusText}`);
+                }
+                const uploadResult = await uploadResponse.json();
+                console.log('Upload result:', uploadResult);
+
+                // Then, process the image
+                const processResponse = await fetch('https://process.aijazai.online/process_image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image_url: uploadResult.file_path })
+                });
+                if (!processResponse.ok) {
+                    throw new Error(`Processing failed: ${processResponse.statusText}`);
+                }
+                const processResult = await processResponse.json();
+                console.log('Process result:', processResult);
+
+                resultDiv.innerHTML = `<pre>${JSON.stringify(processResult, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
